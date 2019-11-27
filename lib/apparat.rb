@@ -21,11 +21,6 @@ def repl
   end
 end
 
-def file(name)
-  source = open(name, 'r').read
-  scan(source)
-end
-
 def main(args)
   if args.empty?
     repl
