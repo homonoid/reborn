@@ -30,14 +30,16 @@ def main(args)
   if args.empty?
     repl
   else
-    args.each do |filename|
+    sources = args.map do |filename| 
       begin
-        file(filename)
+        open(filename, 'r').read
       rescue Errno::ENOENT
         puts "=== SORRY! ===\n File '#{filename}' does not exist"
-        exit(1) # exit with error
+        exit(1)
       end
     end
+
+    sources.each { |source| scan(source) }
   end
 end
 
