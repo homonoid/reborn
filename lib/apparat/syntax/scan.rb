@@ -24,8 +24,24 @@ module Apparat
     end
 
     private def consume(chunk)
-      if not @string
+      if @string
         case chunk
+        when /\A([^\n"\\\{]|\\[ntvr"])/
+          makeToken(:TCHAR, $1)
+        when /\A\{/
+          @string = false
+          @interpolation = true
+          makeToken(:BINTER, '{')
+        when /\A"/
+          @string = false
+          makeToken(:QUOTE, '"')
+        else
+          raise ApparatError.new("panic of '#{chunk[0]}' in text literal", @line, @column)
+        end
+      else
+        case chunk
+        when /\A'((?!['\n\t\r\\])[\x00-\x7F]|\\[\\nrtv'])'/
+          makeToken(:ASCII, $1, $&.size)
         when /\A(;|=>?|<=|>=|\+=|\-=|\*=|\^=|,|\.|[\(\{\[\]\)\]\|])/
           makeToken($1.to_sym, $1)
         when /\A\}/
@@ -58,22 +74,6 @@ module Apparat
           makeToken(:QUOTE, '"')
         else
           raise ApparatError.new("panic of '#{chunk[0]}'", @line, @column)
-        end
-      else
-        case chunk
-        when /\A([^\n"\\\{]|\\[ntvr"])/
-          makeToken(:TCHAR, $1)
-        when /\A\{/
-          @string = false
-          @interpolation = true
-          makeToken(:BINTER, '{')
-        when /\A\}/
-          makeToken(:TINTER, '}')
-        when /\A"/
-          @string = false
-          makeToken(:QUOTE, '"')
-        else
-          raise ApparatError.new("panic of '#{chunk[0]}' in text literal", @line, @column)
         end
       end
     end
