@@ -24,9 +24,7 @@ module Apparat
 
     private def consume(chunk)
       case chunk
-      when /\A(;|=>?|<=|>=|\+=|\-=|\*=|\^=|,|\.)/
-        makeToken($1.to_sym, $1)
-      when /\A([\(\{\[\]\)\}\]\|])/
+      when /\A(;|=>?|<=|>=|\+=|\-=|\*=|\^=|,|\.|[\(\{\[\]\)\}\]\|])/
         makeToken($1.to_sym, $1)
       when /\A([\+\-\*\/\^><])/
         makeToken(:OP, $1)
@@ -34,13 +32,13 @@ module Apparat
         makeToken(@@KEYWORDS[$1] || :ID, $1)
       when /\A0(b)([01]+)/, /\A0(x|u)([0-9A-fa-f]+)/, /0(o)([0-7]+)/
         type = {'b' => :BIN, 'x' => :HEX, 'o' => :OCT, 'u' => :UNI}[$1]
-        makeToken(type, $2, $&.size)
+        makeToken(type, $2, $&.size) # value has no 0[boux], but length does, so use the whole match
       when /\A([0-9]+\.[0-9])(e\-?[0-9]+)?/
         $2 ? makeToken(:SCI, $&) : makeToken(:FLOAT, $1)
       when /\A([1-9][0-9]*|0)/
         makeToken(:DECIMAL, $1)
       when /\A[\n]+/
-        @line += $&.size
+        @line += $&.size # skip multiple newlines a time
         @column = 1
         makeToken(:IGNORE, nil, $&.size)
       when /\A[ \t\r]+/
