@@ -23,7 +23,7 @@ module Apparat
       Token.new(type, value, @line, @column, length)
     end
 
-    private def consume(chunk)
+    private def identify(chunk)
       if @string
         case chunk
         when /\A([^\n"\\\{]|\\[ntvr"])/
@@ -84,7 +84,7 @@ module Apparat
       tokens = []
 
       while @pos < @source.size
-        token = consume(@source[@pos..])
+        token = identify(@source[@pos..])
         @pos += token.length
         @column += token.length
         tokens << token if token.type != :IGNORE
