@@ -61,7 +61,7 @@ module Apparat
         end
       else
         case chunk
-        when /\A([^\n"\\\{]|\\[ntvr])/
+        when /\A([^\n"\\\{]|\\[ntvr"])/
           makeToken(:TCHAR, $1)
         when /\A\{/
           @string = false
