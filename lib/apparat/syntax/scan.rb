@@ -40,6 +40,8 @@ module Apparat
         end
       else
         case chunk
+        when /\A--[^\n]*/
+          makeToken(:IGNORE, nil, $&.size)
         when /\A'((?!['\n\t\r\\])[\x00-\x7F]|\\[\\nrtv'])'/
           makeToken(:ASCII, $1, $&.size)
         when /\A(;|=>?|<=|>=|\+=|\-=|\*=|\^=|,|\.|[\(\{\[\]\)\]\|])/
