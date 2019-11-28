@@ -8,7 +8,7 @@ I am trying to keep the source compact but readable, thence balancing on the edg
 
 # Usage
 
-1. Trying the project does not require any additional stuff except the repository itself.
+1. Trying the project does not require any additional stuff except the repository itself (and ruby, of course).
 2. General (and sole) debug entry for Reborn is `lib/apparat.rb`. It is... But it works!
 3. Run it with `ruby lib/apparat.rb`, and observe the glorious repl. 
 4. Type and see the bytecode of things that are currently available to be parsed (see below), or
