@@ -1,5 +1,5 @@
 module Apparat
-  class ApparatError < StandardError
+  class Error < StandardError
     def initialize(message, line, column)
       @message = message
       @line = line
@@ -7,7 +7,7 @@ module Apparat
     end
 
     def to_s
-      "#{@message.capitalize} at line #{@line}, column #{@column}"
+      "#{@message} at line #{@line}, column #{@column}"
     end
   end
 end
