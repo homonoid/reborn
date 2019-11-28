@@ -2,11 +2,11 @@
 
 Reborn is a work-in-progress implementation of the Apparat programming language in Ruby.
 
-# Source
+### Source
 
 I am trying to keep the source compact but readable, thence balancing on the edge and trying not to fail the second.
 
-# Usage
+### Usage
 
 1. Trying the project does not require any additional stuff except the repository itself (and ruby, of course).
 2. General (and sole) debug entry for Reborn is `lib/apparat.rb`. It is... But it works!
@@ -17,7 +17,7 @@ errors and panics of things that are not.
 6. Scanner is completely working. If you want to see the tokens instead of the underdeveloped
 bytecode, change the `JUST_SCAN` constant in `lib/apparat.rb` from `false` to `true`.
 
-# Progress
+### Progress
 
 - [x] Scan numbers (float, decimal hex, binary, octal, unicode).
 - [x] Scan identifiers and keywords.
