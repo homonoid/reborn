@@ -1,6 +1,7 @@
 # BE AWARE:
 # Current revision of this file is DEBUG and DEBUG only. 
-# Use with caution and read with understanding of stated.
+# It is written in bad and hurting Ruby.
+# Use with caution and (do not) read with understanding of stated.
 
 require_relative 'apparat/syntax/scan'
 require_relative 'apparat/syntax/parse'
@@ -20,8 +21,18 @@ def process(source)
   if JUST_SCAN
     tokens.each {|token| puts "#{token.type}\t#{token.value}"}
   else
-    parse(tokens).each do |instruction|
-      puts "#{instruction.name}\t#{instruction.argument}"
+    program = parse(tokens)
+
+    puts "--- INSTRUCTIONS ---\n\n"
+
+    program[:actions].each do |instr|
+      puts "@ L: #{instr.line}, C: #{instr.column} \t| #{instr.name}\t#{instr.argument}"
+    end
+
+    puts "\n--- DATA ---\n\n"
+
+    program[:data].each_with_index do |element, idx|
+      puts "offset #{idx} | <#{element}>"
     end
   end
 end

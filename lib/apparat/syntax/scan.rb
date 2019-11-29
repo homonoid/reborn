@@ -36,7 +36,7 @@ module Apparat
           @string = false
           makeToken(:'"', '"')
         else
-          raise Apparat::Error.new("panic of '#{chunk[0]}' in text literal", @line, @column)
+          raise Apparat::Error.new("Invalid lexeme: '#{chunk[0]}' in text literal", @line, @column)
         end
       else
         case chunk
@@ -53,10 +53,10 @@ module Apparat
           makeToken(:OP, $1)
         when /\A([a-zA-Z_][a-zA-Z0-9_]+|[a-zA-Z])/
           makeToken(Apparat::KEYWORDS[$1] || :ID, $1)
-        when /\A0(b)([01]+)/, /\A0(x|u)([0-9A-fa-f]+)/, /0(o)([0-7]+)/
+        when /\A0(b)([01]+)/, /\A0(x|u)([0-9A-Fa-f]+)/, /0(o)([0-7]+)/
           type = {'b' => :BIN, 'x' => :HEX, 'o' => :OCT, 'u' => :UNI}[$1]
           makeToken(type, $2, $&.size) # value has no 0[boux], but length does, so use the whole match
-        when /\A([0-9]+\.[0-9])(e\-?[0-9]+)?/
+        when /\A([0-9]+\.[0-9]+)(e\-?[0-9]+)?/
           $2 ? makeToken(:SCI, $&) : makeToken(:FLOAT, $1)
         when /\A([1-9][0-9]*|0)/
           makeToken(:DECIMAL, $1)
@@ -70,7 +70,7 @@ module Apparat
           @string = true
           makeToken(:'"', '"')
         else
-          raise Apparat::Error.new("panic of '#{chunk[0]}'", @line, @column)
+          raise Apparat::Error.new("Invalid lexeme: '#{chunk[0]}'", @line, @column)
         end
       end
     end

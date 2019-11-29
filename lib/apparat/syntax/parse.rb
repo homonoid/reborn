@@ -1,12 +1,14 @@
 require_relative '../error'
 
 module Apparat
-  Instruction = Struct.new(:name, :argument)
+  Instruction = Struct.new(:name, :argument, :line, :column)
+  DataItem = Struct.new(:type, :offset)
 
   class Parser
     def initialize(tokens)
       @tokens = tokens
-      @program = []
+      @actions = []
+      @data = []
       @position = 0
     end
 
@@ -31,12 +33,82 @@ module Apparat
       peek.type == type ? consume : syntaxError
     end
 
+    # Store the value and calculate its offset.
+    private def store(value)
+      @data.include?(value) ? @data.index(value) : (@data << value; @data.size - 1)
+    end
+
+    # num ::= DECIMAL | FLOAT | SCI | HEX | OCT | BIN | ASCII | UNI
+    private def num
+      if [:DECIMAL, :FLOAT, :HEX, :OCT, :BIN, :ASCII, :UNI, :SCI].include?(peek.type)
+        type = peek.type == :DECIMAL ? :float : peek.type.downcase
+        value = store(consume.value)
+        DataItem.new(type, value)
+      else
+        false
+      end
+    end
+
+    # text ::= " (TCHAR | { atomar })* " 
+    # TODO: change atomar to expr.
+    private def text
+      if match(:'"')
+        line, column, concat_column = peek.line, peek.column - 1, 0
+        buffer, depth = '', 0
+
+        loop do
+          buffer += consume.value while peek.type == :TCHAR
+
+          unless buffer.empty?
+            @actions << Instruction.new(:PUSH_TEXT, store(buffer), line, column)
+            depth += 1
+          end
+
+          if match(:'{') 
+            concat_column = peek.column - 1
+            buffer = ''; depth += 1; atomar; expect(:'}')
+          else
+            expect(:'"'); break
+          end
+        end
+
+        count = depth % 2 == 0 ? depth - 1 : depth
+        @actions << Instruction.new(:CONCAT, count, line, concat_column) if depth > 1; true
+      else
+        false
+      end
+    end
+
+    # list ::= [ atomar* ]
+    private def list
+      if match(:'[')
+        line, column = peek.line, peek.column - 1
+        length = 0; length += 1 while atomar; expect(:']')
+        @actions << Instruction.new(:LIST, length, line, column); true
+      else
+        false
+      end
+    end
+    
+    # atomar ::= id | list | num | text
     private def atomar
+      line, column = peek.line, peek.column
+
       if peek.type == :ID
-        @program << Instruction.new(:REQ, consume.value)
-      elsif match(:'[')
-        next while atomar; expect(:']') # list ::= [ atomar* ]
-        @program << Instruction.new(:LIST)
+        offset = store(consume.value)
+        @actions << Instruction.new(:REQ, offset, line, column)
+      elsif number = num
+        instructions = {
+          float:  :PUSH_FLOAT,  hex: :PUSH_HEX,
+          oct:    :PUSH_OCTAL,  bin: :PUSH_BIN,
+          ascii:  :PUSH_ASCII,  uni: :PUSH_UNI,
+          sci:    :PUSH_SCI
+        }
+        @actions << Instruction.new(instructions[number.type], number.offset, line, column)
+      elsif text
+        true
+      elsif list
+        true
       else
         false
       end
@@ -44,7 +116,7 @@ module Apparat
 
     def parse
       atomar; expect(:EOF) # entry ::= atomar EOF
-      @program
+      { actions: @actions, data: @data }
     end
   end
 end
