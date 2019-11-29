@@ -39,8 +39,8 @@ module Apparat
 
     # num ::= DECIMAL | FLOAT | SCI | HEX | OCT | BIN | ASCII | UNI
     private def num
-      if [:DECIMAL, :FLOAT, :HEX, :OCT, :BIN, :ASCII, :UNI, :SCI].include?(peek.type)
-        type = peek.type == :DECIMAL ? :float : peek.type.downcase
+      if [:FLOAT, :HEX, :OCT, :BIN, :ASCII, :UNI, :SCI].include?(peek.type)
+        type = peek.type.downcase
         offset = store(consume.value)
         [type, offset]
       else
@@ -52,27 +52,31 @@ module Apparat
     # TODO: change atomar to expr.
     private def text
       if match(:'"')
-        line, column, concat_column = peek.line, peek.column - 1, 0
-        buffer, depth = '', 0
+        line, column = peek.line, peek.column
+        concat_column = 0
+        buffer = ''
+        depth = 0
 
         loop do
           buffer += consume.value while peek.type == :TCHAR
 
           unless buffer.empty?
-            @actions << Instruction.new(:PUSH_TEXT, store(buffer), line, column)
+            @actions << Instruction.new(:PUSH_CHAIN, store(buffer), line, column)
             depth += 1
           end
 
           if match(:'{') 
             concat_column = peek.column - 1
-            buffer = ''; depth += 1; atomar; expect(:'}')
+            buffer = ''; depth += 1
+            atomar; expect(:'}')
           else
             expect(:'"'); break
           end
         end
 
         count = depth % 2 == 0 ? depth - 1 : depth
-        @actions << Instruction.new(:CONCAT, count, line, concat_column) if depth > 1; true
+        @actions << Instruction.new(:CONCAT, count, line, concat_column) if depth > 1
+        true
       else
         false
       end
@@ -106,7 +110,7 @@ module Apparat
         }
         @actions << Instruction.new(instructions[type], offset, line, column)
       elsif text
-        true
+        @actions << Instruction.new(:TEXT, nil, line, column)
       elsif list
         true
       else

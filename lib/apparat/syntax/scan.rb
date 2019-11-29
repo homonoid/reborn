@@ -56,10 +56,8 @@ module Apparat
         when /\A0(b)([01]+)/, /\A0(x|u)([0-9A-Fa-f]+)/, /0(o)([0-7]+)/
           type = {'b' => :BIN, 'x' => :HEX, 'o' => :OCT, 'u' => :UNI}[$1]
           makeToken(type, $2, $&.size) # value has no 0[boux], but length does, so use the whole match
-        when /\A([0-9]+\.[0-9]+)(e\-?[0-9]+)?/
+        when /\A([0-9]+\.[0-9]+)(e\-?[0-9]+)?/, /\A([1-9][0-9]*|0)/
           $2 ? makeToken(:SCI, $&) : makeToken(:FLOAT, $1)
-        when /\A([1-9][0-9]*|0)/
-          makeToken(:DECIMAL, $1)
         when /\A[\n]+/
           @line += $&.size # skip multiple newlines a time
           @column = 1
