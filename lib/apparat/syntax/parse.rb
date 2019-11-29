@@ -53,7 +53,6 @@ module Apparat
     private def text
       if match(:'"')
         line, column = peek.line, peek.column
-        concat_column = 0
         buffer = ''
         depth = 0
 
@@ -66,7 +65,6 @@ module Apparat
           end
 
           if match(:'{') 
-            concat_column = peek.column - 1
             buffer = ''; depth += 1
             atomar; expect(:'}')
           else
@@ -74,8 +72,7 @@ module Apparat
           end
         end
 
-        count = depth % 2 == 0 ? depth - 1 : depth
-        @actions << Instruction.new(:CONCAT, count, line, concat_column) if depth > 1
+        @actions << Instruction.new(:TEXT, depth, line, column - 1)
         true
       else
         false
@@ -110,7 +107,7 @@ module Apparat
         }
         @actions << Instruction.new(instructions[type], offset, line, column)
       elsif text
-        @actions << Instruction.new(:TEXT, nil, line, column)
+        true
       elsif list
         true
       else
