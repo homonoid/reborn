@@ -2,7 +2,6 @@ require_relative '../error'
 
 module Apparat
   Instruction = Struct.new(:name, :argument, :line, :column)
-  DataItem = Struct.new(:type, :offset)
 
   class Parser
     def initialize(tokens)
@@ -42,8 +41,8 @@ module Apparat
     private def num
       if [:DECIMAL, :FLOAT, :HEX, :OCT, :BIN, :ASCII, :UNI, :SCI].include?(peek.type)
         type = peek.type == :DECIMAL ? :float : peek.type.downcase
-        value = store(consume.value)
-        DataItem.new(type, value)
+        offset = store(consume.value)
+        [type, offset]
       else
         false
       end
@@ -98,13 +97,14 @@ module Apparat
         offset = store(consume.value)
         @actions << Instruction.new(:REQ, offset, line, column)
       elsif number = num
+        type, offset = number
         instructions = {
           float:  :PUSH_FLOAT,  hex: :PUSH_HEX,
           oct:    :PUSH_OCTAL,  bin: :PUSH_BIN,
           ascii:  :PUSH_ASCII,  uni: :PUSH_UNI,
           sci:    :PUSH_SCI
         }
-        @actions << Instruction.new(instructions[number.type], number.offset, line, column)
+        @actions << Instruction.new(instructions[type], offset, line, column)
       elsif text
         true
       elsif list
