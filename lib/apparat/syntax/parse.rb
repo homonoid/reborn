@@ -37,7 +37,7 @@ module Apparat
       @data.include?(value) ? @data.index(value) : (@data << value; @data.size - 1)
     end
 
-    # num ::= DECIMAL | FLOAT | SCI | HEX | OCT | BIN | ASCII | UNI
+    # num ::= FLOAT | SCI | HEX | OCT | BIN | ASCII | UNI
     private def num
       if [:FLOAT, :HEX, :OCT, :BIN, :ASCII, :UNI, :SCI].include?(peek.type)
         type = peek.type.downcase
