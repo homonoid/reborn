@@ -34,7 +34,9 @@ module Apparat
     def syntax_error
       found = (peek.type == :EOF ? 'EOF' : "'#{peek.value}'")
       raise Apparat::Error.new(
-        "Invalid syntax: #{found}", peek.line, peek.column
+        "Invalid syntax: #{found}",
+        peek.line,
+        peek.column
       )
     end
 

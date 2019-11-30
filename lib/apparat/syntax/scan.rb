@@ -45,7 +45,9 @@ module Apparat
           make_token(:'"', '"')
         else
           raise Apparat::Error.new(
-            "Invalid lexeme: '#{chunk[0]}' in text literal", @line, @column
+            "Invalid lexeme: '#{chunk[0]}' in text literal",
+            @line,
+            @column
           )
         end
       else
@@ -83,7 +85,9 @@ module Apparat
           make_token(:'"', '"')
         else
           raise Apparat::Error.new(
-            "Invalid lexeme: '#{chunk[0]}'", @line, @column
+            "Invalid lexeme: '#{chunk[0]}'",
+            @line,
+            @column
           )
         end
       end
