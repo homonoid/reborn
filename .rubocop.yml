@@ -1,0 +1,8 @@
+AllCops:
+  TargetRubyVersion: 2.6
+
+Style/PerlBackrefs:
+  Enabled: false
+
+Style/RegexpLiteral:
+  Enabled: false
