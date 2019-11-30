@@ -2,7 +2,7 @@ module Apparat
   module Byte
     Instruction = Struct.new(:name, :arg, :line, :col)
 
-    # The root of some bytenodes to simplify their implementations.
+    # The parent of some bytenodes to simplify their implementations.
     class Node
       def initialize(arg, line, col)
         @arg = arg

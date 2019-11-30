@@ -2,7 +2,8 @@ require_relative '../error'
 require_relative '../bytegen'
 
 module Apparat
-  # Apply some rules to an array of `Token`s and return some bytecode generators.
+  # Apply some rules to an array of `Token`s and return corresponding
+  # bytecode generators.
   class Parser
     def initialize(filename, tokens)
       @tokens = tokens
