@@ -12,28 +12,33 @@ def scan(source)
   Apparat::Scanner.new(source).scan
 end
 
-def parse(tokens)
-  Apparat::Parser.new(tokens).parse
+def parse(file, tokens)
+  Apparat::Parser.new(file, tokens).parse
 end
 
-def process(source)
+def process(file, source)
   tokens = scan(source)
   if JUST_SCAN
     tokens.each {|token| puts "#{token.type}\t#{token.value}"}
   else
-    program = parse(tokens)
+    program = parse(file, tokens)
 
-    puts "--- INSTRUCTIONS ---\n\n"
-
-    program[:actions].each do |instr|
-      puts "@ L: #{instr.line}, C: #{instr.column} \t| #{instr.name}\t#{instr.argument}"
+    # puts "--- INSTRUCTIONS ---\n\n"
+    puts "--- ASSEMBLED ---"
+    
+    program.make.each do |instr|
+      puts "@ L: #{instr.line}, C: #{instr.col} \t| #{instr.name}\t#{instr.arg}"
     end
 
-    puts "\n--- DATA ---\n\n"
+    # program[:actions].each do |instr|
+    #   puts "@ L: #{instr.line}, C: #{instr.column} \t| #{instr.name}\t#{instr.argument}"
+    # end
 
-    program[:data].each_with_index do |element, idx|
-      puts "offset #{idx} | <#{element}>"
-    end
+    # puts "\n--- DATA ---\n\n"
+
+    # program[:data].each_with_index do |element, idx|
+    #   puts "offset #{idx} | <#{element}>"
+    # end
   end
 end
 
@@ -42,7 +47,7 @@ def repl
 
   while line = Readline.readline('~ ', true)
     begin
-      process(line)
+      process("stdin", line)
     rescue Apparat::Error => e
       puts "=== SORRY! ===\n #{e}"
     end
@@ -67,7 +72,7 @@ def main(args)
     begin
       sources.each do |source|
         name = source.path
-        process(source.read)
+        process(name, source.read)
       end
     rescue Apparat::Error => e
       puts "=== SORRY! ===\n #{e} (<#{name}>)"
