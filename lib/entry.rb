@@ -107,5 +107,3 @@ def main(args)
     files(args)
   end
 end
-
-main(ARGV)
