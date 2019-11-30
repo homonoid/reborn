@@ -39,7 +39,7 @@ module Apparat
     class List < Node
       def make
         [@arg.flatten.map(&:make),
-         Instruction.new(:LIST, @arg.size, @line, @col)]
+         Instruction.new(:LIST, @arg.size.to_s, @line, @col)]
       end
     end
 
@@ -54,7 +54,7 @@ module Apparat
     class Text < Node
       def make
         [@arg.flatten.map(&:make),
-         Instruction.new(:TEXT, @arg.size, @line, @col)]
+         Instruction.new(:TEXT, @arg.size.to_s, @line, @col)]
       end
     end
 
