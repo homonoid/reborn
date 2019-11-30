@@ -1,4 +1,5 @@
 module Apparat
+  # A uniform Reborn error.
   class Error < StandardError
     def initialize(message, line, column)
       @message = message

@@ -2,6 +2,7 @@ require_relative '../error'
 require_relative '../bytegen'
 
 module Apparat
+  # Apply some rules to an array of `Token`s and return some bytecode generators.
   class Parser
     def initialize(filename, tokens)
       @tokens = tokens
@@ -9,93 +10,108 @@ module Apparat
       @position = 0
     end
 
-    private def peek
+    private
+
+    def peek
       @tokens[@position]
     end
 
-    private def consume
-      @position += 1; @tokens[@position - 1]
+    def consume
+      @position += 1
+      @tokens[@position - 1]
     end
 
-    private def match(type)
-      peek.type == type ? (@position += 1; true) : false
+    def match(type)
+      if peek.type == type
+        @position += 1
+        true
+      else
+        false
+      end
     end
 
-    private def syntaxError
-      found = (peek.type == :EOF ? "EOF" : "'#{peek.value}'")
-      raise Apparat::Error.new("Invalid syntax: #{found}", peek.line, peek.column)
+    def syntax_error
+      found = (peek.type == :EOF ? 'EOF' : "'#{peek.value}'")
+      raise Apparat::Error.new(
+        "Invalid syntax: #{found}", peek.line, peek.column
+      )
     end
 
-    private def expect(type)
-      peek.type == type ? consume : syntaxError
+    def expect(type)
+      peek.type == type ? consume : syntax_error
     end
 
     # num ::= FLOAT | SCI | HEX | OCT | BIN | ASCII | UNI
-    private def num
-      if [:FLOAT, :HEX, :OCT, :BIN, :ASCII, :UNI, :SCI].include?(peek.type)
+    def num
+      if %i[FLOAT HEX OCT BIN ASCII UNI SCI].include?(peek.type)
         Apparat::Byte::Number.new(peek.type, peek.value, peek.line, consume.column)
       else
         false
       end
     end
 
-    # text ::= " (TCHAR | { atomar })* " 
+    # text ::= " (TCHAR | { atomar })* "
     # TODO: change atomar to expr.
-    private def text
-      if match(:'"')
-        line, col = peek.line, peek.column
-        fragments = []
+    def text
+      return unless match(:'"')
 
-        loop do
-          buffer = ''
-          buffer += consume.value while peek.type == :TCHAR
+      line = peek.line
+      col = peek.column
+      fragments = []
 
-          unless buffer.empty?
-            fragments << Apparat::Byte::Chain.new(buffer, line, col)
-            buffer = ''
-          end
+      loop do
+        buffer = ''
+        buffer += consume.value while peek.type == :TCHAR
 
-          if match(:'{') 
-            fragments << atomar
-            expect(:'}')
-          else
-            expect(:'"')
-            return Apparat::Byte::Text.new(fragments, line, col - 1)
-          end
+        unless buffer.empty?
+          fragments << Apparat::Byte::Chain.new(buffer, line, col)
+        end
+
+        if match(:'{')
+          fragments << atomar
+          expect(:'}')
+        else
+          expect(:'"')
+          return Apparat::Byte::Text.new(fragments, line, col - 1)
         end
       end
     end
 
     # list ::= [ atomar* ]
-    private def list
-      if match(:'[')
-        line, col = peek.line, peek.column - 1
-        items = []
+    def list
+      return unless match(:'[')
 
-        while item = atomar
-          items << item
-        end
-        
-        expect(:']')
+      line = peek.line
+      col = peek.column - 1
+      items = []
 
-        Apparat::Byte::List.new(items, line, col)
+      while (item = atomar)
+        items << item
       end
+
+      expect(:']')
+
+      Apparat::Byte::List.new(items, line, col)
     end
-    
+
     # atomar ::= ID | list | num | text
-    private def atomar
-      line, col = peek.line, peek.column
+    def atomar
+      line = peek.line
+      col = peek.column
 
       if peek.type == :ID
         Apparat::Byte::Request.new(consume.value, line, col)
-      elsif node = list or node = num or node = text
+      elsif (node = list) || (node = num) || (node = text)
         node
       end
     end
 
+    public
+
     # entry ::= atomar EOF
     def parse
-      body = [atomar]; expect(:EOF)
+      body = [atomar]
+      expect(:EOF)
       Apparat::Byte::Root.new(@filename, body)
     end
   end

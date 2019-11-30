@@ -1,10 +1,8 @@
 # UPD: This is a new, semi-official entry for Apparat.
 
-require_relative "apparat/syntax/scan"
-require_relative "apparat/syntax/parse"
-require_relative "apparat/error"
-
-$just_scan = false
+require_relative 'apparat/syntax/scan'
+require_relative 'apparat/syntax/parse'
+require_relative 'apparat/error'
 
 def error(message, do_quit = false)
   puts "=== SORRY! ===\n #{message}"
@@ -30,7 +28,7 @@ def disasm(assembly)
     instrs << [instr.name, offset(data, instr.arg)]
   end
 
-  puts "--- META ---"
+  puts '--- META ---'
   meta.each_with_index do |pos, idx|
     puts "@#{idx}\t| line #{pos[0]}, column #{pos[1]}"
   end
@@ -48,41 +46,40 @@ def disasm(assembly)
   end
 end
 
-def process(filename, source, do_quit = false)
-  begin
-    tokens = Apparat::Scanner.new(source).scan
-    if $just_scan
-      tokens.each do |token|
-        puts "#{token.type}\t#{token.value}"
-      end
-    else
-      assembly = Apparat::Parser.new(filename, tokens).parse
-      disasm(assembly)
+def process(filename, source, just_scan, do_quit = false)
+  tokens = Apparat::Scanner.new(source).scan
+  if just_scan
+    tokens.each do |token|
+      puts "#{token.type}\t#{token.value}"
     end
-  rescue Apparat::Error => e
-    error("#{e} of '#{filename}'", do_quit)
+  else
+    assembly = Apparat::Parser.new(filename, tokens).parse
+    disasm(assembly)
   end
+rescue Apparat::Error => e
+  error("#{e} of '#{filename}'", do_quit)
 end
 
-def files(paths)
+def files(paths, just_scan)
   paths.each do |f|
-    if not File.exists?(f)
+    if !File.exist?(f)
       error("Got '#{f}', but it does not exist", true)
     elsif File.directory?(f)
       error("Got '#{f}', but it is a directory", true)
     else
-      source = open(f, 'r').read
-      process(f, source, true)
+      source = File.read(f)
+      process(f, source, just_scan, true)
     end
   end
 end
 
-def repl
+def repl(just_scan)
   require 'readline'
 
   begin
-    while line = Readline.readline('~ ', true)
-      process("stdin", line, false) # `false` means do not quit
+    while (line = Readline.readline('~ ', true))
+      # `false` means do not quit
+      process('stdin', line, just_scan, false) unless line.strip.empty?
     end
   rescue Interrupt
     exit
@@ -90,10 +87,12 @@ def repl
 end
 
 def main(args)
+  just_scan = false
+
   # Process the flags.
-  args = args.filter do |arg| 
-    if arg == "-scan"
-      $just_scan = true
+  args = args.filter do |arg|
+    if arg == '-scan'
+      just_scan = true
       false
     else
       true
@@ -102,8 +101,8 @@ def main(args)
 
   # Transfer the control.
   if args.empty?
-    repl
+    repl(just_scan)
   else
-    files(args)
+    files(args, just_scan)
   end
 end
