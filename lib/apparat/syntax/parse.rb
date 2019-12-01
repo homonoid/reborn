@@ -106,10 +106,11 @@ module Apparat
 
     # list ::= [ expr* ]
     def list
+      line = peek.line
+      col = peek.column
+
       return unless match(:'[')
 
-      line = peek.line
-      col = peek.column - 1
       items = []
 
       while (item = expr)

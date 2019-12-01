@@ -53,6 +53,13 @@ module Apparat
         end
       else
         case chunk
+        when /\A[\n]+/
+          @line += $&.size # skip multiple newlines a time
+          @column = 1
+          make_token(:IGNORE, nil, $&.size)
+        when /\A[ \t\r]+/
+          @column += $&.size
+          make_token(:IGNORE, nil, $&.size)
         when /\A--[^\n]*/
           make_token(:IGNORE, nil, $&.size)
         when /\A'((?!['\n\t\r\\])[\x00-\x7F]|\\[\\nrtv'])'/
@@ -69,18 +76,12 @@ module Apparat
           make_token(:OP, $1)
         when /\A([a-zA-Z_][a-zA-Z0-9_]+|[a-zA-Z])/
           make_token(Apparat::KEYWORDS[$1] || :ID, $1)
-        when /\A0(b)([01]+)/, /\A0(x|u)([0-9A-Fa-f]+)/, /0(o)([0-7]+)/
+        when /\A0(b)([01]+)/, /\A0(x|u)([0-9A-Fa-f]+)/, /\A0(o)([0-7]+)/
           type = { 'b' => :BIN, 'x' => :HEX, 'o' => :OCT, 'u' => :UNI }[$1]
           # Value has no 0[boux], but length does, so use the whole match ($&):
           make_token(type, $2, $&.size)
         when /\A([0-9]+\.[0-9]+)(e\-?[0-9]+)?/, /\A([1-9][0-9]*|0)/
           $2 ? make_token(:SCI, $&) : make_token(:FLOAT, $1)
-        when /\A[\n]+/
-          @line += $&.size # skip multiple newlines a time
-          @column = 1
-          make_token(:IGNORE, nil, $&.size)
-        when /\A[ \t\r]+/
-          make_token(:IGNORE, nil, $&.size)
         when /\A"/
           @string = true
           make_token(:'"', '"')
@@ -105,17 +106,18 @@ module Apparat
         token = identify(@source[@pos..])
 
         @pos += token.length
-        @column += token.length
 
         if met_not && token.type == :IN
-          not_token = tokens.pop
-          tokens << Token.new(:NOTIN, 'not in', not_token.line, not_token.column)
           met_not = false
+          not_tok = tokens.pop
+          tokens << Token.new(:NOTIN, 'not in', not_tok.line, not_tok.column, 5)
+          @column += tokens.last.length
           next
         elsif met_is && token.type == :NOT
-          is_token = tokens.pop
-          tokens << Token.new(:ISNOT, 'is not', is_token.line, is_token.column)
           met_is = false
+          is_tok = tokens.pop
+          tokens << Token.new(:ISNOT, 'is not', is_tok.line, is_tok.column, 5)
+          @column += tokens.last.length
           next
         elsif token.type == :NOT
           met_not = true
@@ -123,8 +125,12 @@ module Apparat
           met_is = true
         elsif token.type == :IGNORE
           next
+        else
+          met_not = false
+          met_is = false
         end
 
+        @column += token.length
         tokens << token
       end
 
