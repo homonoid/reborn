@@ -78,7 +78,6 @@ module Apparat
     end
 
     # text ::= " (TCHAR | { expr })* "
-    # TODO: change atomar to expr.
     def text
       return unless match(:'"')
 
