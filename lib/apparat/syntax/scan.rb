@@ -7,6 +7,7 @@ module Apparat
     'and' => :AND,
     'or' => :OR,
     'is' => :IS,
+    'in' => :IN,
     'not' => :NOT,
     'mod' => :MOD,
     'to' => :TO
@@ -64,7 +65,7 @@ module Apparat
             @interpolation = false
           end
           make_token(:'}', '}')
-        when /\A([\+\-\*\/\^><])/
+        when /\A([\+\-\*\/\^\>\<])/
           make_token(:OP, $1)
         when /\A([a-zA-Z_][a-zA-Z0-9_]+|[a-zA-Z])/
           make_token(Apparat::KEYWORDS[$1] || :ID, $1)
@@ -97,12 +98,34 @@ module Apparat
 
     def scan
       tokens = []
+      met_is = false
+      met_not = false
 
       while @pos < @source.size
         token = identify(@source[@pos..])
+
         @pos += token.length
         @column += token.length
-        tokens << token if token.type != :IGNORE
+
+        if met_not && token.type == :IN
+          not_token = tokens.pop
+          tokens << Token.new(:NOTIN, 'not in', not_token.line, not_token.column)
+          met_not = false
+          next
+        elsif met_is && token.type == :NOT
+          is_token = tokens.pop
+          tokens << Token.new(:ISNOT, 'is not', is_token.line, is_token.column)
+          met_is = false
+          next
+        elsif token.type == :NOT
+          met_not = true
+        elsif token.type == :IS
+          met_is = true
+        elsif token.type == :IGNORE
+          next
+        end
+
+        tokens << token
       end
 
       tokens.push make_token(:EOF, '') # return the tokens plus the EOF marker

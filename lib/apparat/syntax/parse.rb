@@ -9,6 +9,30 @@ module Apparat
       @tokens = tokens
       @filename = filename
       @position = 0
+      @optable = {
+        'or' => [10, 'left'],
+        'and' => [10, 'left'],
+
+        'is' => [20, 'left'],
+        'is not' => [20, 'left'],
+        'in' => [20, 'left'],
+        'not in' => [20, 'left'],
+
+        '<' => [30, 'left'],
+        '>' => [30, 'left'],
+        '<=' => [30, 'left'],
+        '>=' => [30, 'left'],
+
+        '+' => [40, 'left'],
+        '-' => [40, 'left'],
+
+        '*' => [50, 'left'],
+        '/' => [50, 'left'],
+        'mod' => [50, 'left'],
+
+        '^' => [60, 'right'],
+        'to' => [70, 'right']
+      }
     end
 
     private
@@ -53,7 +77,7 @@ module Apparat
       end
     end
 
-    # text ::= " (TCHAR | { atomar })* "
+    # text ::= " (TCHAR | { expr })* "
     # TODO: change atomar to expr.
     def text
       return unless match(:'"')
@@ -71,7 +95,7 @@ module Apparat
         end
 
         if match(:'{')
-          fragments << atomar
+          fragments << expr
           expect(:'}')
         else
           expect(:'"')
@@ -80,7 +104,7 @@ module Apparat
       end
     end
 
-    # list ::= [ atomar* ]
+    # list ::= [ expr* ]
     def list
       return unless match(:'[')
 
@@ -88,7 +112,7 @@ module Apparat
       col = peek.column - 1
       items = []
 
-      while (item = atomar)
+      while (item = expr)
         items << item
       end
 
@@ -102,10 +126,48 @@ module Apparat
       line = peek.line
       col = peek.column
 
-      if peek.type == :ID
+      if peek.type == :OP && %(+ -).include?(peek.value)
+        Apparat::Byte::Unary.new([consume.value, atomar], line, col)
+      elsif match(:NOT)
+        Apparat::Byte::Unary.new(['!', atomar], line, col)
+      elsif peek.type == :ID
         Apparat::Byte::Request.new(consume.value, line, col)
       elsif (node = list) || (node = num) || (node = text)
         node
+      elsif match(:'(')
+        inner = expr
+        expect(:')')
+        inner
+      end
+    end
+
+    # Check if the peeked token is an infix.
+    # NOTE: does not modify/consume anything.
+    def infix
+      infixes = %w[to and or + - * / ^ mod <= >= < > is in] +
+                ['not in', 'is not']
+
+      infixes.include?(peek.value)
+    end
+
+    # expr ::= atomar infix expr
+    # NOTE: precedence table (@optable) is in `initialize`.
+    def expr(min_prec = 5, step = 10)
+      left = atomar
+
+      loop do
+        if !left || !infix || @optable[peek.value][0] < min_prec
+          return left
+        else
+          op = consume
+          line = op.line
+          col = op.column
+          prec, assoc = @optable[op.value]
+          next_prec = prec || (prec + step if assoc == 'left')
+          right = expr(next_prec)
+          syntax_error if right.nil?
+          left = Apparat::Byte::Binary.new([op.value, left, right], line, col)
+        end
       end
     end
 
@@ -113,7 +175,7 @@ module Apparat
 
     # entry ::= atomar EOF
     def parse
-      body = [atomar]
+      body = [expr]
       expect(:EOF)
       Apparat::Byte::Root.new(@filename, body)
     end
