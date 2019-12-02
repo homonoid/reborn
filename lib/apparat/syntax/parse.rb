@@ -94,7 +94,7 @@ module Apparat
         end
 
         if match(:'{')
-          fragments << expr
+          fragments << (expr || syntax_error)
           expect(:'}')
         else
           expect(:'"')
@@ -127,15 +127,15 @@ module Apparat
       col = peek.column
 
       if peek.type == :OP && %(+ -).include?(peek.value)
-        Apparat::Byte::Unary.new([consume.value, atomar], line, col)
+        Apparat::Byte::Unary.new([consume.value, atomar || syntax_error], line, col)
       elsif match(:NOT)
-        Apparat::Byte::Unary.new(['!', atomar], line, col)
+        Apparat::Byte::Unary.new(['not', atomar || syntax_error], line, col)
       elsif peek.type == :ID
         Apparat::Byte::Request.new(consume.value, line, col)
       elsif (node = list) || (node = num) || (node = text)
         node
       elsif match(:'(')
-        inner = expr
+        inner = expr || syntax_error
         expect(:')')
         inner
       end
@@ -164,8 +164,7 @@ module Apparat
           col = op.column
           prec, assoc = @optable[op.value]
           next_prec = prec || (prec + step if assoc == 'left')
-          right = expr(next_prec)
-          syntax_error if right.nil?
+          right = expr(next_prec) || syntax_error
           left = Apparat::Byte::Binary.new([op.value, left, right], line, col)
         end
       end
