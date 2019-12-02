@@ -1,2 +1,2 @@
-fact ? |n| (*) n to 1;
+fact = |n| (*) n to 1;
 print(fact(5));
