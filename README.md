@@ -30,5 +30,8 @@ I am trying to keep the source compact but readable, thence balancing on an edge
 - [x] Able to parse lists.
 - [x] Able to parse numbers (decimal, float, hex, octal, binary, unicode, ascii, scientific, ...).
 - [x] Able to parse texts and perceive interpolation as concatenation.
+- [x] Able to parse prefixes (`not` and `+` and `-`)
+- [x] Able to parse infixes (`+`, `-`, `*`, `/`, `mod`, `^`, `is`, `to`, etc.) with what
+seems a correct precedence.
 - [x] Able to generate bytecode for things above. It seems valid, 
 yet until the actual VM set and working I can't say so for sure.

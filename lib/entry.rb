@@ -18,6 +18,7 @@ def offset(data, item)
   end
 end
 
+# TODO: get rid of this method in favor of writer.rb and dis.rb?
 def disasm(assembly)
   instrs = []
   data = []
@@ -25,7 +26,14 @@ def disasm(assembly)
 
   assembly.make.each do |instr|
     meta << [instr.line, instr.col]
-    instrs << [instr.name, offset(data, instr.arg)]
+    instrs << [instr.name]
+    if !instr.provide_offset.zero?
+      instrs.last << offset(data, instr.arg)
+      instrs.last << true # is_offset?
+    else
+      instrs.last << instr.arg unless instr.arg.nil?
+      instrs.last << false
+    end
   end
 
   puts '--- META ---'
@@ -36,7 +44,10 @@ def disasm(assembly)
   puts "\n--- ACTIONS ---"
   instrs.each_with_index do |instruction, idx|
     out = "@#{idx}\t| #{instruction[0]}"
-    out += "\t$#{instruction[1]}" if instruction.size > 1
+    if instruction.size == 3
+      sigil = instruction.last ? '$' : ''
+      out += "\t#{sigil}#{instruction[1]}"
+    end
     puts out
   end
 
@@ -53,6 +64,8 @@ def process(filename, source, just_scan, do_quit = false)
       puts "#{token.type}\t#{token.value}"
     end
   else
+    return unless tokens.size > 1
+
     assembly = Apparat::Parser.new(filename, tokens).parse
     disasm(assembly)
   end
@@ -79,7 +92,7 @@ def repl(just_scan)
   begin
     while (line = Readline.readline('~ ', true))
       # `false` means do not quit
-      process('stdin', line, just_scan, false) unless line.strip.empty?
+      process('stdin', line, just_scan, false)
     end
   rescue Interrupt
     exit

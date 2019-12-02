@@ -1,0 +1,38 @@
+[
+  -- Simple (atomar) data types.
+
+  12.0e-12 12.12 12 0x12 0o12 0b101010 'a' 0u12 -- number
+  "I am a long and lonely line!"  -- text
+  [1 2 3] -- a list
+
+  -- Unary operations.
+  -12
+  +12
+  not 12
+
+  -- Binary operations.
+  12 + 12
+  12 - 12
+  12 * 12
+  12 / 12
+  12 ^ 12
+  12 mod 12
+  12 < 12
+  12 > 12
+  12 <= 12
+  12 >= 12
+  12 in [1 2 3 4]
+  12 not in [1 2 3 4]
+  12 is 13
+  13 is not 12
+
+  -- Some interpolation?
+
+  "1 + 1 = {1 + 1}"
+  "2 + 2 * 2 = {2 + 2 * 2}"
+  "Hello, {"Alyx"}" -- double quotes work as well!
+
+  -- And ranges to end stuff nicely!
+  1 to 20
+  10 to 1
+]
