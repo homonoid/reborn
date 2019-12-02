@@ -62,7 +62,7 @@ module Apparat
     class Unary < Node
       def make
         operand_instr = @arg[1].make
-        prefix_instr = { '+' => :POS, '-' => :NEG, '!' => :INV }[@arg[0]]
+        prefix_instr = { '+' => :POS, '-' => :NEG, 'not' => :INV }[@arg[0]]
         [operand_instr, Instruction.new(prefix_instr, nil, @line, @col, 0)]
       end
     end
